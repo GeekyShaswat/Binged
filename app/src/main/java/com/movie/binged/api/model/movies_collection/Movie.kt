@@ -1,0 +1,30 @@
+package com.movie.binged.api.model.movies_collection
+
+data class Movie(
+    val after_credits: Boolean,
+    val available_translations: List<String>,
+    val certification: String,
+    val colors: Colors,
+    val comment_count: Int,
+    val country: String,
+    val during_credits: Boolean,
+    val genres: List<String>,
+    val homepage: String,
+    val ids: Ids,
+    val images: Images,
+    val language: String,
+    val languages: List<String>,
+    val original_title: String,
+    val overview: String,
+    val rating: Double,
+    val released: String,
+    val runtime: Int,
+    val status: String,
+    val subgenres: List<String>,
+    val tagline: String,
+    val title: String,
+    val trailer: String,
+    val updated_at: String,
+    val votes: Int,
+    val year: Int
+)
