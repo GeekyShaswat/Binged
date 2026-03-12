@@ -1,4 +1,4 @@
-package com.movie.binged.repository
+package com.movie.binged.data.repository
 
 import com.movie.binged.api.client.ApiInterface
 import com.movie.binged.api.model.movies_collection.Movie
@@ -47,6 +47,20 @@ class ApiRepository(
 
     suspend fun searchResult( query : String ) : Response<List<SearchResultItem>> {
         return api.getSearch(query)
+    }
+
+    suspend fun moviesByGenre(genre: String): MovieCollection {
+        return api.getMoviesByGenre(genre.toTraktGenre())
+    }
+
+    suspend fun showsByGenre(genre: String): ShowCollection {
+        return api.getShowsByGenre(genre.toTraktGenre())
+    }
+
+    private fun String.toTraktGenre(): String = when (this) {
+        "Sci-Fi"    -> "science-fiction"
+        "Biography" -> "documentary"
+        else        -> this.lowercase()
     }
 
 }

@@ -13,6 +13,6 @@ data class DetailScreenModel(
     val status: String,
     val tagline: String,
     val title: String,
-    val trailer: String,
+    val trailer: String?,
     val year: Int
 )

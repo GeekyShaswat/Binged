@@ -1,4 +1,4 @@
-package com.movie.binged.screens
+package com.movie.binged.ui.screens
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -31,11 +31,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.movie.binged.R
-import com.movie.binged.navigation.Screens
+import com.movie.binged.ui.navigation.Screens
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(navController: NavController) {
+fun SplashScreen(navController: NavController,nextDestination: String) {
     var startAnimation by remember { mutableStateOf(false) }
 
     val scale by animateFloatAsState(
@@ -50,10 +50,10 @@ fun SplashScreen(navController: NavController) {
         label = "alpha"
     )
 
-    LaunchedEffect(key1 = true) {
+    LaunchedEffect(Unit) {
         startAnimation = true
         delay(2500)
-        navController.navigate(Screens.Home.route) {
+        navController.navigate(nextDestination) {
             popUpTo(Screens.Splash.route) { inclusive = true }
         }
     }

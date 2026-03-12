@@ -42,5 +42,19 @@ interface ApiInterface {
         @Query("type") type: String = "show,movie"
     ): Response<List<SearchResultItem>>
 
+    @GET("movies/trending")
+    suspend fun getMoviesByGenre(
+        @Query("genres") genres: String,
+        @Query("limit") limit: Int = 20,
+        @Query("page") page: Int = 1
+    ): MovieCollection
+
+    @GET("shows/trending")
+    suspend fun getShowsByGenre(
+        @Query("genres") genres: String,
+        @Query("limit") limit: Int = 20,
+        @Query("page") page: Int = 1
+    ): ShowCollection
+
 
 }

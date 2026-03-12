@@ -1,15 +1,12 @@
 package com.movie.binged.viewmodel
 
-import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.movie.binged.api.client.TmdbRepository
-import com.movie.binged.api.model.searchResult.SearchResult
 import com.movie.binged.api.model.searchResult.SearchResultItem
-import com.movie.binged.repository.ApiRepository
+import com.movie.binged.data.repository.ApiRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

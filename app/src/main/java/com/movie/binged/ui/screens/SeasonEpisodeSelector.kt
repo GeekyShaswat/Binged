@@ -1,18 +1,14 @@
-package com.movie.binged.screens
+package com.movie.binged.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -22,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.movie.binged.model.SeasonEpModel
@@ -53,8 +48,8 @@ fun SeasonDropDown(
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded.value) },
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = MaterialTheme.colors.primary.copy(alpha = 0.5f),
-                focusedBorderColor = MaterialTheme.colors.primary
+                unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                focusedBorderColor = MaterialTheme.colorScheme.primary
             )
         )
         ExposedDropdownMenu(
@@ -62,7 +57,7 @@ fun SeasonDropDown(
             onDismissRequest = { expanded.value = false },
             modifier = Modifier
                 .background(
-                    MaterialTheme.colors.surface,
+                    MaterialTheme.colorScheme.surface,
                     RoundedCornerShape(16.dp) // Rounded menu
                 )
         ) {
@@ -116,8 +111,8 @@ fun EpisodeDropDown(
             },
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = MaterialTheme.colors.primary.copy(alpha = 0.5f),
-                focusedBorderColor = MaterialTheme.colors.primary
+                unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                focusedBorderColor = MaterialTheme.colorScheme.primary
             )
         )
 
@@ -126,7 +121,7 @@ fun EpisodeDropDown(
             onDismissRequest = { expanded = false },
             modifier = Modifier
                 .background(
-                    MaterialTheme.colors.surface,
+                    MaterialTheme.colorScheme.surface,
                     RoundedCornerShape(16.dp) // Rounded menu
                 )
         ) {
@@ -147,42 +142,38 @@ fun EpisodeDropDown(
 @Composable
 fun SeasonEpisodeSelector(
     data: List<SeasonEpModel>,
+    initialSeason: Int?,       // ← add
+    initialEpisode: Int?,      // ← add
     onSeasonEpisodeSelected: (Int, Int) -> Unit
 ) {
-    var seasonSelector by remember(data) {
-        mutableStateOf(data.firstOrNull())
+    var seasonSelector by remember(data, initialSeason) {  // ← depend on initialSeason
+        mutableStateOf(
+            data.firstOrNull { it.season == (initialSeason ?: 1) } ?: data.firstOrNull()
+        )
     }
 
-    var selectedEpisode by remember(seasonSelector) {
-        mutableStateOf(1)
+    var selectedEpisode by remember(seasonSelector, initialEpisode) {  // ← depend on initialEpisode
+        mutableStateOf(initialEpisode ?: 1)
     }
 
     LaunchedEffect(seasonSelector, selectedEpisode) {
-        onSeasonEpisodeSelected(seasonSelector?.season ?: 1, selectedEpisode)
+        seasonSelector?.let {
+            onSeasonEpisodeSelected(it.season, selectedEpisode)
+        }
     }
-
 
     if (seasonSelector == null) return
 
-    Row(
-        modifier = Modifier
-            .padding(8.dp)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row {
         SeasonDropDown(
             season = data,
             selectedSeason = seasonSelector,
             onSeasonSelected = {
                 seasonSelector = it
                 selectedEpisode = 1
-                onSeasonEpisodeSelected(it.season, 1)
             },
             modifier = Modifier.weight(1f)
         )
-
-        Spacer(modifier = Modifier.width(6.dp))
 
         EpisodeDropDown(
             episodeCount = seasonSelector!!.episode,
@@ -190,7 +181,6 @@ fun SeasonEpisodeSelector(
             selectedEpisode = selectedEpisode,
             onEpisodeSelected = {
                 selectedEpisode = it
-                onSeasonEpisodeSelected(seasonSelector!!.season, it)
             },
             modifier = Modifier.weight(1f)
         )

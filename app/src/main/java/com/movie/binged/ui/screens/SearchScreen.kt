@@ -1,5 +1,6 @@
-package com.movie.binged.screens
+package com.movie.binged.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +20,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
@@ -32,6 +32,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -61,10 +62,11 @@ import coil.compose.AsyncImage
 import com.movie.binged.R
 import com.movie.binged.api.client.RetrofitClient
 import com.movie.binged.api.model.searchResult.SearchResultItem
-import com.movie.binged.repository.ApiRepository
+import com.movie.binged.data.repository.ApiRepository
 import com.movie.binged.viewmodel.SearchViewModel
 import com.movie.binged.viewmodel.SearchViewModelFactory
 import com.movie.binged.viewmodel.UiState
+
 @Composable
 fun SearchScreen(
     onResultClick: (String, String) -> Unit = { _, _ -> }
@@ -85,12 +87,11 @@ fun SearchScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colors.background)
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        // Search Bar Section
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colors.surface,
+            color = MaterialTheme.colorScheme.surface,
             tonalElevation = 2.dp
         ) {
             OutlinedTextField(
@@ -98,18 +99,18 @@ fun SearchScreen(
                 onValueChange = { searchValue = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top=30.dp, start = 16.dp, end = 16.dp),
+                    .padding(top = 30.dp, start = 16.dp, end = 16.dp),
                 placeholder = {
                     Text(
                         "Search movies, TV shows...",
-                        color = MaterialTheme.colors.onSurface
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Search",
-                        tint = MaterialTheme.colors.primary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 },
                 trailingIcon = {
@@ -121,7 +122,7 @@ fun SearchScreen(
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Clear",
-                                tint = MaterialTheme.colors.onSurface
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -129,11 +130,11 @@ fun SearchScreen(
                 shape = RoundedCornerShape(16.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colors.primary,
-                    unfocusedBorderColor = MaterialTheme.colors.secondary.copy(alpha = 0.5f),
-                    focusedTextColor = MaterialTheme.colors.onSurface,
-                    cursorColor = MaterialTheme.colors.primary,
-                    unfocusedTextColor = MaterialTheme.colors.onSurface
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 ),
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Search
@@ -149,12 +150,11 @@ fun SearchScreen(
             )
         }
 
-        // Content Section
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .weight(1f)
-                .background(MaterialTheme.colors.background)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             when (uiState) {
                 UiState.NOQUERY -> {
@@ -176,8 +176,10 @@ fun SearchScreen(
                                 val id = if (type == "movie") {
                                     item.movie.ids.imdb
                                 } else {
+                                    Log.d("TAG","show clicked in search")
                                     item.show.ids.imdb
                                 }
+                                Log.d("TAG","id is : $id , type is : $type")
                                 onResultClick(id, type)
                             },
                             searchViewModel
@@ -215,7 +217,7 @@ fun SearchResultsList(
                 text = "${results.size} Results",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colors.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
@@ -224,7 +226,10 @@ fun SearchResultsList(
             if ((item.type == "movie" && item.movie.year != 0) || (item.type == "show" && item.show.year != 0)){
                 SearchResultCard(
                     item = item,
-                    onClick = { onItemClick(item) },
+                    onClick = {
+                        Log.d("TAG","searched click item: $item")
+                        onItemClick(item)
+                    },
                     searchViewModel
                 )
             }
@@ -247,7 +252,6 @@ fun SearchResultCard(
         viewModel.loadPoster(if (item.type == "movie") item.movie.ids.tmdb else item.show.ids.tmdb, item.type)
     }
 
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -255,7 +259,7 @@ fun SearchResultCard(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colors.surface
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Row(
@@ -264,7 +268,6 @@ fun SearchResultCard(
                 .padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Poster Image
             Card(
                 modifier = Modifier
                     .width(60.dp)
@@ -282,7 +285,6 @@ fun SearchResultCard(
                 )
             }
 
-            // Content
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -294,7 +296,7 @@ fun SearchResultCard(
                         text = title,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colors.onSurface,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -307,15 +309,13 @@ fun SearchResultCard(
                         MetadataChipSearch(text = year.toString())
                         MetadataChipSearch(text = item.type.replaceFirstChar { it.uppercase() })
                     }
-
                 }
             }
 
-            // Arrow icon
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colors.onSurface,
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.align(Alignment.CenterVertically)
             )
         }
@@ -336,19 +336,19 @@ fun EmptySearchState() {
                 imageVector = Icons.Default.Search,
                 contentDescription = null,
                 modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Search for movies and TV shows",
                 fontSize = 18.sp,
-                color = MaterialTheme.colors.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
             Text(
                 text = "Start typing to find what you're looking for",
                 fontSize = 14.sp,
-                color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -364,13 +364,13 @@ fun LoadingState() {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator(
-                color = MaterialTheme.colors.primary
+                color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Searching...",
                 fontSize = 16.sp,
-                color = MaterialTheme.colors.onSurface
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -390,19 +390,19 @@ fun NoResultsState(query: String) {
                 imageVector = Icons.Default.Search,
                 contentDescription = null,
                 modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "No results found",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colors.onSurface
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "We couldn't find anything for \"$query\"",
                 fontSize = 14.sp,
-                color = MaterialTheme.colors.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -427,19 +427,19 @@ fun ErrorState(
                 painter = painterResource(R.drawable.warning),
                 contentDescription = null,
                 modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colors.error
+                tint = MaterialTheme.colorScheme.error
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Oops!",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colors.onSurface
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = message,
                 fontSize = 14.sp,
-                color = MaterialTheme.colors.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -447,7 +447,7 @@ fun ErrorState(
             Button(
                 onClick = onRetry,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colors.primary
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
                 Icon(
@@ -472,7 +472,7 @@ fun MetadataChipSearch(text: String) {
             text = text,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             fontSize = 14.sp,
-            color = MaterialTheme.colors.onSurface
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
