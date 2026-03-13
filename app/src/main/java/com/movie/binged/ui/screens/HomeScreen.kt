@@ -109,10 +109,6 @@ fun Homepage(
             homeViewModel.loadTrendingData(userGenres = genres)
         }
     }
-//
-//    LaunchedEffect(Unit, retry.intValue) {
-//        homeViewModel.loadTrendingData()
-//    }
 
     val homeScreenSection = homeViewModel.homeSection.collectAsState().value
     val historySection by homeViewModel.historySection.collectAsState()

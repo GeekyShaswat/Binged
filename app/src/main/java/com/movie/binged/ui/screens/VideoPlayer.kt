@@ -3,6 +3,7 @@ package com.movie.binged.ui.screens
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -66,11 +67,11 @@ fun VideoPlayer(url: String?, navController: NavController) {
     val webViewState = rememberWebViewState()
     var customView by remember { mutableStateOf<View?>(null) }
 
-    // ← Check WebView is available before trying to render
     val webViewAvailable = remember {
         try {
-            val webViewPackage = android.webkit.WebView.getCurrentWebViewPackage()
+            val webViewPackage = WebView.getCurrentWebViewPackage()
             Log.d("WebView", "Provider: ${webViewPackage?.packageName}")
+            Log.d("WebView", "Version: ${webViewPackage?.versionName}")
             webViewPackage != null
         } catch (e: Exception) {
             Log.e("WebView", "WebView check failed: ${e.message}")
@@ -78,8 +79,62 @@ fun VideoPlayer(url: String?, navController: NavController) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    val allowedDomains = listOf(
+        "vidking.net",
+        "videasy.net",
+        "zupcloud.com",
+        "myflixer.to",
+        // ← Video CDN domains found in logs
+        "workers.dev",              // Cloudflare Workers (tylercampbell1991.workers.dev)
+        "tigerflare10.xyz",         // Video segment CDN
+        "tylercampbell1991.workers.dev",
+        // Common video CDN/streaming domains
+        "akamaized.net",
+        "akamaihd.net",
+        "fastly.net",
+        "cloudflare.com",
+        "jwplatform.com",
+        "jwpcdn.com",
+        "bitmovin.com",
+        "jsdelivr.net",
+        "hlsjs.video-dev.org",
+        // HLS/DASH streaming file types
+        "m3u8",
+        ".mp4",
+        ".webm",
+        ".ts",
+        ".jpg",                     // ← video poster/thumbnail images
+        ".png",
+        ".jpeg"
+    )
+    fun isAllowed(url: String): Boolean {
+        val lower = url.lowercase()
+        return allowedDomains.any { lower.contains(it) }
+    }
 
+    val killAdsJs = """
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for (let reg of registrations) {
+                    reg.unregister();
+                    console.log('Unregistered SW:', reg.scope);
+                }
+            });
+        }
+        Object.defineProperty(navigator, 'serviceWorker', {
+            get: function() { return undefined; }
+        });
+        window.open = function() { return null; };
+        window.alert = function() {};
+        window.confirm = function() { return false; };
+        window.prompt = function() { return null; };
+    """.trimIndent()
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
         if (!webViewAvailable) {
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -107,8 +162,6 @@ fun VideoPlayer(url: String?, navController: NavController) {
                     modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
                 )
                 Spacer(modifier = Modifier.height(24.dp))
-
-                // ← Opens Play Store to WebView page
                 Button(
                     onClick = {
                         try {
@@ -119,7 +172,6 @@ fun VideoPlayer(url: String?, navController: NavController) {
                                 )
                             )
                         } catch (e: Exception) {
-                            // Play Store not available, open browser instead
                             context.startActivity(
                                 Intent(
                                     Intent.ACTION_VIEW,
@@ -140,10 +192,7 @@ fun VideoPlayer(url: String?, navController: NavController) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Update WebView")
                 }
-
                 Spacer(modifier = Modifier.height(12.dp))
-
-                // ← Also keep go back option
                 OutlinedButton(
                     onClick = { navController.navigateUp() },
                     modifier = Modifier
@@ -154,8 +203,7 @@ fun VideoPlayer(url: String?, navController: NavController) {
                     Text("Go Back", color = Color.White)
                 }
             }
-        }else {
-            // ← Your existing WebView code unchanged
+        } else {
             AndroidView(
                 factory = { ctx ->
                     WebView(ctx).apply {
@@ -167,69 +215,95 @@ fun VideoPlayer(url: String?, navController: NavController) {
                         settings.useWideViewPort = true
                         settings.loadWithOverviewMode = true
                         settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                        settings.setGeolocationEnabled(false)
+                        settings.javaScriptCanOpenWindowsAutomatically = false
+                        settings.setSupportMultipleWindows(false)
                         settings.userAgentString =
-                            "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                            "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 " +
+                                    "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
 
                         CookieManager.getInstance().setAcceptCookie(true)
                         CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
 
-                        val adDomains = listOf(
-                            "doubleclick.net", "googlesyndication.com",
-                            "adservice.google.com", "googletagmanager.com",
-                            "googletagservices.com", "amazon-adsystem.com",
-                            "moatads.com", "outbrain.com", "taboola.com",
-                            "popads.net", "popcash.net", "adnxs.com",
-                            "rubiconproject.com", "openx.net", "pubmatic.com",
-                            "criteo.com", "adsafeprotected.com", "scorecardresearch.com",
-                            "exoclick.com", "trafficjunky.net", "juicyads.com",
-                            "plugrush.com", "hilltopads.net", "propellerads.com",
-                            "adsterra.com", "clickadu.com", "zedo.com",
-                            "yllix.com", "adf.ly"
-                        )
-
-                        val adPatterns = listOf(
-                            "/ads/", "/ad/", "/adserver/", "/adserve/",
-                            "/banner/", "/popup/", "/popunder/", "/tracking/",
-                            "/tracker/", "ad_unit", "adzone", "pop-up", "popunder"
-                        )
-
-                        fun shouldBlock(url: String): Boolean {
-                            val lowerUrl = url.lowercase()
-                            return adDomains.any { lowerUrl.contains(it) } ||
-                                    adPatterns.any { lowerUrl.contains(it) }
-                        }
-
                         webViewClient = object : WebViewClient() {
+
+                            override fun onPageStarted(
+                                view: WebView,
+                                url: String,
+                                favicon: Bitmap?
+                            ) {
+                                super.onPageStarted(view, url, favicon)
+                                view.evaluateJavascript(killAdsJs, null)
+                            }
+
+                            override fun onPageFinished(view: WebView, url: String) {
+                                super.onPageFinished(view, url)
+                                view.evaluateJavascript(killAdsJs, null)
+                            }
+
                             override fun shouldOverrideUrlLoading(
                                 view: WebView,
                                 request: WebResourceRequest
                             ): Boolean {
-                                val url = request.url.toString()
-                                if (url.startsWith("intent://") || url.startsWith("market://")) return true
-                                if (shouldBlock(url)) return true
-                                return false
+                                val reqUrl = request.url.toString()
+                                if (reqUrl.startsWith("intent://") ||
+                                    reqUrl.startsWith("market://")) return true
+                                return !isAllowed(reqUrl)
                             }
 
                             override fun shouldInterceptRequest(
                                 view: WebView,
                                 request: WebResourceRequest
                             ): WebResourceResponse? {
-                                if (shouldBlock(request.url.toString())) {
-                                    return WebResourceResponse("text/plain", "utf-8", null)
+                                val reqUrl = request.url.toString().lowercase()
+
+                                // Always allow vidking's own assets
+                                if (reqUrl.contains("vidking.net")) return null
+
+                                // Block everything not in allowlist
+                                if (!isAllowed(reqUrl)) {
+                                    Log.d("WebView", "BLOCKED: $reqUrl")
+                                    return WebResourceResponse(
+                                        "text/plain", "utf-8",
+                                        "".byteInputStream()
+                                    )
                                 }
-                                return super.shouldInterceptRequest(view, request)
+
+                                Log.d("WebView", "ALLOWED: $reqUrl")
+                                return null
                             }
                         }
 
+                        // ── Single webChromeClient with all overrides ────
                         webChromeClient = object : WebChromeClient() {
                             private var customViewCallback: CustomViewCallback? = null
 
-                            override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                            // Block pop-up windows
+                            override fun onCreateWindow(
+                                view: WebView,
+                                isDialog: Boolean,
+                                isUserGesture: Boolean,
+                                resultMsg: android.os.Message?
+                            ): Boolean {
+                                val href = view.handler.obtainMessage()
+                                view.requestFocusNodeHref(href)
+                                val popupUrl = href.data?.getString("url") ?: ""
+                                Log.d("WebView", "Pop-up blocked: $popupUrl")
+                                return false
+                            }
+
+                            // Handle fullscreen video
+                            override fun onShowCustomView(
+                                view: View,
+                                callback: CustomViewCallback
+                            ) {
                                 customViewCallback = callback
                                 customView = view
-                                val decorView = (ctx as? Activity)?.window?.decorView as? ViewGroup
+                                val decorView =
+                                    (ctx as? Activity)?.window?.decorView as? ViewGroup
                                 decorView?.addView(
-                                    view, ViewGroup.LayoutParams(
+                                    view,
+                                    ViewGroup.LayoutParams(
                                         ViewGroup.LayoutParams.MATCH_PARENT,
                                         ViewGroup.LayoutParams.MATCH_PARENT
                                     )
@@ -238,7 +312,8 @@ fun VideoPlayer(url: String?, navController: NavController) {
 
                             override fun onHideCustomView() {
                                 val view = customView ?: return
-                                val decorView = (ctx as? Activity)?.window?.decorView as? ViewGroup
+                                val decorView =
+                                    (ctx as? Activity)?.window?.decorView as? ViewGroup
                                 decorView?.removeView(view)
                                 customView = null
                                 customViewCallback?.onCustomViewHidden()
@@ -258,7 +333,7 @@ fun VideoPlayer(url: String?, navController: NavController) {
             )
         }
 
-        // ← Back button always visible regardless of WebView state
+        // ── Back button always visible ───────────────────────────────────
         IconButton(
             onClick = { navController.navigateUp() },
             modifier = Modifier
@@ -266,10 +341,15 @@ fun VideoPlayer(url: String?, navController: NavController) {
                 .align(Alignment.TopStart)
                 .background(Color.Black.copy(alpha = 0.5f), CircleShape)
         ) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+            Icon(
+                Icons.Default.ArrowBack,
+                contentDescription = "Back",
+                tint = Color.White
+            )
         }
     }
 }
+
 @Composable
 fun rememberWebViewState(): Bundle {
     return rememberSaveable { Bundle() }
