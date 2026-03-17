@@ -84,9 +84,8 @@ fun VideoPlayer(url: String?, navController: NavController) {
         "videasy.net",
         "zupcloud.com",
         "myflixer.to",
-        // ← Video CDN domains found in logs
-        "workers.dev",              // Cloudflare Workers (tylercampbell1991.workers.dev)
-        "tigerflare10.xyz",         // Video segment CDN
+        "workers.dev",
+        "tigerflare10.xyz",
         "tylercampbell1991.workers.dev",
         // Common video CDN/streaming domains
         "akamaized.net",
@@ -98,12 +97,11 @@ fun VideoPlayer(url: String?, navController: NavController) {
         "bitmovin.com",
         "jsdelivr.net",
         "hlsjs.video-dev.org",
-        // HLS/DASH streaming file types
         "m3u8",
         ".mp4",
         ".webm",
         ".ts",
-        ".jpg",                     // ← video poster/thumbnail images
+        ".jpg",
         ".png",
         ".jpeg"
     )

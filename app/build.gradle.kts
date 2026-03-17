@@ -1,3 +1,4 @@
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -16,10 +17,37 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    val properties = Properties()
+    properties.load(project.rootProject.file("local.properties").inputStream())
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            buildConfigField(
+                "String",
+                "TMDB_API_KEY",
+                "\"${properties.getProperty("TMDB_API_KEY")}\""
+            )
+
+            buildConfigField(
+                "String",
+                "TRAKT_TV_API_KEY",
+                "\"${properties.getProperty("TRAKT_TV_API_KEY")}\""
+            )
+        }
+        debug {
+            buildConfigField(
+                "String",
+                "TMDB_API_KEY",
+                "\"${properties.getProperty("TMDB_API_KEY")}\""
+            )
+
+            buildConfigField(
+                "String",
+                "TRAKT_TV_API_KEY",
+                "\"${properties.getProperty("TRAKT_TV_API_KEY")}\""
+            )
         }
     }
 
@@ -34,6 +62,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {

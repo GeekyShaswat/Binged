@@ -9,7 +9,10 @@ class TmdbApiKeyInterceptor : Interceptor {
         val originalRequest = chain.request()
 
         val newUrl = originalRequest.url.newBuilder()
-            .addQueryParameter("api_key", BuildConfig.TMDB_API_KEY)
+            .addQueryParameter(
+                "api_key",
+                value = BuildConfig.TMDB_API_KEY,
+            )
             .build()
 
         val newRequest = originalRequest.newBuilder()

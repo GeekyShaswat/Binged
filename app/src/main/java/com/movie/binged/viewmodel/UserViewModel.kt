@@ -26,7 +26,7 @@ class UserViewModel(private val userRepo: UserRepository) : ViewModel() {
     fun logout(onDone: () -> Unit) {
         viewModelScope.launch {
             userRepo.clearProfile()
-            onDone()  // navigate after clear is done
+            onDone()
         }
     }
 }

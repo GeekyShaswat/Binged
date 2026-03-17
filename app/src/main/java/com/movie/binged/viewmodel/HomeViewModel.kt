@@ -78,7 +78,7 @@ class HomeViewModel(
                         trendingMovieDef.await().map { it.movie.toPosterUI() }
                     ),
                     HomeScreenSection(
-                        "HISTORY_PLACEHOLDER",  // ← placeholder, replaced in UI
+                        "HISTORY_PLACEHOLDER",
                         emptyList()
                     ),
                     HomeScreenSection(
@@ -96,13 +96,6 @@ class HomeViewModel(
                 )
 
                 if (userGenres.isNotEmpty()) {
-                    sectionList.add(
-                        HomeScreenSection(
-                            title = "Based on your selected genres",
-                            data = emptyList(),
-                            isGenreSection = true
-                        )
-                    )
                     userGenres.forEach { genre ->
                         val movies = genreMovieDefs[genre]?.await() ?: emptyList()
                         if (movies.isNotEmpty()) {
@@ -128,96 +121,6 @@ class HomeViewModel(
         }
     }
 
-    /**
-     *
-
-    @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
-    fun loadTrendingData(userGenres: List<String> = emptyList()) {
-        if (loadedForGenres == userGenres) return  // ← skip if same genres
-        loadedForGenres = userGenres
-        _uiState.value = Status.Loading
-        if (!networkMonitor.isInternetAvailable()) {
-            _uiState.value = Status.Error("Network Not Available")
-            return
-        }
-        viewModelScope.launch {
-            try {
-                val trendingMovieDef = async { apiRepo.trendingMovies() }
-                val trendingShowDef  = async { apiRepo.trendingShows() }
-                val popularMovieDef  = async { apiRepo.popularMovies() }
-                val popularShowDef   = async { apiRepo.popularShows() }
-
-                // ← one async call per genre, all running in parallel
-                val genreMovieDefs = userGenres.associateWith { genre ->
-                    async { runCatching { apiRepo.moviesByGenre(genre) }.getOrElse { emptyList() } }
-                }
-                val genreShowDefs = userGenres.associateWith { genre ->
-                    async { runCatching { apiRepo.showsByGenre(genre) }.getOrElse { emptyList() } }
-                }
-
-                val historyItems = userRepository.returnHistory().first()
-
-                val sectionList = mutableListOf(
-                    HomeScreenSection(
-                        "Trending Movies",
-                        trendingMovieDef.await().map { it.movie.toPosterUI() }
-                    ),
-                    HomeScreenSection(
-                        "Previously Watched",
-                        historyItems.map { it.toPosterUI(it.mediaType) }
-                    ),
-                    HomeScreenSection(
-                        "Trending Shows",
-                        trendingShowDef.await().map { it.show.toPosterUI() }
-                    ),
-                    HomeScreenSection(
-                        "Popular Movies",
-                        popularMovieDef.await().map { it.toPosterUI() }
-                    ),
-                    HomeScreenSection(
-                        "Popular Shows",
-                        popularShowDef.await().map { it.toPosterUI() }
-                    )
-                )
-
-                // ← add a divider-like header section once before genre rows
-                if (userGenres.isNotEmpty()) {
-                    Log.d("TAG","userGenre: $userGenres")
-                    sectionList.add(
-                        HomeScreenSection(
-                            title = "Based on your selected genres",  // special marker — handled in UI
-                            data = emptyList(),
-                            isGenreSection = true
-                        )
-                    )
-
-                    // one section per genre for movies
-                    userGenres.forEach { genre ->
-                        val movies = genreMovieDefs[genre]?.await() ?: emptyList()
-                        Log.d("TAG", "genre based movie :$movies")
-                        if (movies.isNotEmpty()) {
-                            sectionList.add(
-                                HomeScreenSection(
-                                    title = genre,         // "Action", "Comedy", "Sci-Fi"
-                                    data = movies.map { it.movie.toPosterUI() },
-                                    isGenreSection = true  // ← flag to style differently
-                                )
-                            )
-                        }
-                    }
-                }
-
-                _homeSection.value = sectionList
-                _uiState.value = Status.Success
-
-            } catch (e: IOException) {
-                _uiState.value = Status.Error("Connection timeout.")
-            } catch (e: Exception) {
-                _uiState.value = Status.Error(e.message.toString())
-            }
-        }
-    }
-     */
     private fun HistoryEntity.toPosterUI(type : String) : UiPosterData {
         return UiPosterData(
             ids = this.ids,

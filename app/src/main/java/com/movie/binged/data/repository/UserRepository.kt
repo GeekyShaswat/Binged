@@ -70,7 +70,7 @@ class UserRepository(
     }
     suspend fun clearProfile() {
         dataStore.edit { prefs ->
-            prefs.clear()  // wipes all saved keys including name, genres
+            prefs.clear()
         }
     }
 }
